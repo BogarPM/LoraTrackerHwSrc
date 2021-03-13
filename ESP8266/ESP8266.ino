@@ -2,13 +2,13 @@
 
 WiFiClient wcl;
 
-const char* address = "192.168.1.65";    //Observation point server address.
+const char* address = "192.168.1.1";    //Observation point server address.
 uint16_t port = 3001;                  //Observation point server port.
 
 void setup() {
   Serial.begin(9600); //Data will be received from the default HardwareSerial object
   WiFi.mode(WIFI_STA);
-  WiFi.begin("INFINITUM13A1_2.4","aS7DP89W8m");
+  WiFi.begin("TROYANO","8363269005");
   if (WiFi.status() != WL_CONNECTED) {
     //Don't send anything to the Arduino Hardware Serial port
     delay(500);

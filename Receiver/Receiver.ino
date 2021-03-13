@@ -44,7 +44,7 @@ void loop() {
     int state = radio.readData(str);
     if (state == ERR_NONE) {
       //Serial.println("Position received");  //Receive the position data as a string: lat:x.xxx,lng:x.xxx;
-      Serial.println(str);
+      Serial.println(str);  //Send it to the ESP8266 by Serial
     } else if (state == ERR_CRC_MISMATCH) {
       //Serial.println(F("[SX1278] CRC error!"));
     } else {

@@ -24,8 +24,8 @@ RFM95 radio = new Module(10, 2, 5, 6);
 int transmissionState = ERR_NONE;
 
 void setup() {
-  //Serial.begin(9600);
-  ss.begin(9600);
+  Serial.begin(9600);
+  ss.begin(4800);
   //Serial.print(F("[SX1278] Initializing ... "));
   int state = radio.begin();
   if (state == ERR_NONE) {
@@ -38,6 +38,7 @@ void setup() {
   }
   radio.setDio0Action(setFlag);
   sendPosition();
+  
 }
 
 volatile bool transmittedFlag = true;
@@ -57,16 +58,22 @@ void setFlag(void) {
 
 
 void loop() {
-  while(ss.available()>0){    //Read gps
-    char c = ss.read();
-    if(gps.encode(c)){
-      gpsin = true;
+  //Serial.println("Loop");
+  if(ss.available()>0){
+    while(ss.available()>0){    //Read gps
+      char c = ss.read();
+      if(gps.encode(c)){
+        gpsin = true;
+      }
     }
+    transmissionState = radio.startTransmit("r");
   }
+  
   if(gpsin){
     gps.f_get_position(&flat, &flon, &age);
-    sendPosition();
+    Serial.println("GpsReceived");
     receivedPosition = true;
+    sendPosition();
   }
   gpsin = false;
   
@@ -76,12 +83,16 @@ void loop() {
     delay(10);
     if(receivedPosition){
       sendPosition();
-      count = 0;
     }
+    count = 0;
     enableInterrupt = true;
   }
   if(count >=99){
       transmittedFlag = true;
+      enableInterrupt = false;
+      sendPosition();
+      Serial.println("100 Ticks Reached");
+      enableInterrupt = true;
   }
   count++;
   delay(200);
@@ -91,12 +102,21 @@ void sendPosition(){
   if(receivedPosition){
     long _lat = flat*100000000, _lng = flon*100000000;
     char dout[40];
+    Serial.println("Sending position");
     sprintf(dout, "lat:%ld,lng:%ld",_lat,_lng);
     transmissionState = radio.startTransmit(dout,sizeof(dout));
+    Serial.print("Lat: ");
+    Serial.print(flat);
+    Serial.print("    ");
+    Serial.print("Long: ");
+    Serial.print(flon);
   }else{
     if(latch){
       transmissionState = radio.startTransmit("t");
       latch = false;
+    }else{
+      Serial.println("send not received");
+      transmissionState = radio.startTransmit("NR");
     }
   }
 }
