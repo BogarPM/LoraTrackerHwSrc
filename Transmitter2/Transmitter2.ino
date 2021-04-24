@@ -25,15 +25,11 @@ int transmissionState = ERR_NONE;
 
 void setup() {
   Serial.begin(9600);
-  ss.begin(4800);
-  //Serial.print(F("[SX1278] Initializing ... "));
+  ss.begin(9600);
   int state = radio.begin();
   if (state == ERR_NONE) {
     //Serial.println(F("success!"));
   } else {
-    //Serial.print(F("failed, code "));
-    //Serial.println(state);
-    //Serial.print(F("Restart the device"));
     while (true);
   }
   radio.setDio0Action(setFlag);
@@ -59,21 +55,17 @@ void setFlag(void) {
 
 void loop() {
   //Serial.println("Loop");
-  if(ss.available()>0){
-    while(ss.available()>0){    //Read gps
-      char c = ss.read();
-      if(gps.encode(c)){
-        gpsin = true;
-      }
+  while(ss.available()>0){
+    char c = ss.read();
+    transmissionState = radio.startTransmit(c);
+    if(gps.encode(c)){
+      gpsin = true;
     }
-    transmissionState = radio.startTransmit("r");
   }
   
   if(gpsin){
     gps.f_get_position(&flat, &flon, &age);
-    Serial.println("GpsReceived");
     receivedPosition = true;
-    sendPosition();
   }
   gpsin = false;
   
@@ -89,10 +81,10 @@ void loop() {
   }
   if(count >=99){
       transmittedFlag = true;
-      enableInterrupt = false;
-      sendPosition();
-      Serial.println("100 Ticks Reached");
-      enableInterrupt = true;
+      //enableInterrupt = false;
+      //sendPosition();
+      //Serial.println("100 Ticks Reached");
+      //enableInterrupt = true;
   }
   count++;
   delay(200);
@@ -102,20 +94,21 @@ void sendPosition(){
   if(receivedPosition){
     long _lat = flat*100000000, _lng = flon*100000000;
     char dout[40];
-    Serial.println("Sending position");
+    //Serial.println("Sending position");
     sprintf(dout, "lat:%ld,lng:%ld",_lat,_lng);
     transmissionState = radio.startTransmit(dout,sizeof(dout));
-    Serial.print("Lat: ");
-    Serial.print(flat);
-    Serial.print("    ");
-    Serial.print("Long: ");
-    Serial.print(flon);
+    //Serial.print("Lat: ");
+    //Serial.print(flat);
+    //Serial.print("    ");
+    //Serial.print("Long: ");
+    //Serial.print(flon);
+    //Serial.println("");
   }else{
     if(latch){
       transmissionState = radio.startTransmit("t");
       latch = false;
     }else{
-      Serial.println("send not received");
+      //Serial.println("position not received");
       transmissionState = radio.startTransmit("NR");
     }
   }
